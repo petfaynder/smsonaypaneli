@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 246, 246, 247;
+  --background-end-rgb: 255, 255, 255;
+  --primary-color: 126, 34, 206; /* Purple-600 */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 30, 30, 35;
+    --background-end-rgb: 15, 15, 18;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+/* Utilities */
+.text-primary-600 {
+  color: rgb(var(--primary-color));
+}
+
+.dark .text-primary-400 {
+  color: rgb(var(--primary-color) / 0.9);
+}
+
+.bg-primary-50 {
+  background-color: rgb(var(--primary-color) / 0.1);
+}
+
+.dark .bg-primary-900 {
+  background-color: rgb(var(--primary-color) / 0.2);
+}
+
+.border-primary-500 {
+  border-color: rgb(var(--primary-color) / 0.8);
+}
+
+.text-primary-500 {
+  color: rgb(var(--primary-color) / 0.8);
+}
+
+.ring-primary-500 {
+  --tw-ring-color: rgb(var(--primary-color) / 0.8);
+}
+
+.focus\:ring-primary-500:focus {
+  --tw-ring-color: rgb(var(--primary-color) / 0.8);
+}
+
+.focus\:border-primary-500:focus {
+  border-color: rgb(var(--primary-color) / 0.8);
+}
+
+.hover\:bg-primary-50:hover {
+  background-color: rgb(var(--primary-color) / 0.1);
+}
+
+.dark .dark\:bg-primary-900 {
+  background-color: rgb(var(--primary-color) / 0.2);
+}
+
+.bg-primary-600 {
+  background-color: rgb(var(--primary-color));
+}
+
+.hover\:bg-primary-700:hover {
+  background-color: rgb(var(--primary-color) / 1.1);
+}
+
+.focus\:ring-offset-2:focus {
+  --tw-ring-offset-width: 2px;
+}
+
+/* Loading spinner */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+} 

@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Ülke modeli
+model Country {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  name      String
+  flag      String
+  available Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Servis modeli
+model Service {
+  id            Int      @id @default(autoincrement())
+  name          String
+  icon          String
+  price         Float
+  available     Boolean  @default(true)
+  countryPrices String   @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Telefon numarası modeli
+model PhoneNumber {
+  id        String   @id
+  number    String
+  serviceId String
+  countryId Int
+  provider  String
+  status    String
+  smsCode   String?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
