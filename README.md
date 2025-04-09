@@ -83,3 +83,4 @@ Panel, aşağıdaki API endpointlerini sunar:
 3. Değişikliklerinizi commit edin (`git commit -m 'Muhteşem özellik eklendi'`)
 4. Dalınızı push edin (`git push origin ozellik/muhteşem-özellik`)
 5. Bir Pull Request açın "# smsonaypaneli" 
+"# azulsmspanel" 

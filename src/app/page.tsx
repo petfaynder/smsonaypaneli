@@ -60,10 +60,7 @@ export default function Home() {
             {/* Text Content */}
             <div>
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
-                Online hesap doğrulama için <span className="relative inline-block px-2">
-                  <span className="relative z-10">SMS onay hizmeti</span>
-                  <span className="absolute inset-0 bg-gradient-to-r from-orange-500 to-transparent rounded" style={{width: '50%'}}></span>
-                </span>
+                Online hesap doğrulama için <span className="bg-blue-600 px-2">SMS onay hizmeti</span>
               </h2>
               <p className="mt-6 text-lg text-blue-50 max-w-lg">
                 Güvenli, hızlı ve ekonomik SMS onay hizmetimizle sosyal medya ve diğer platformlarda hesaplarınızı kolayca doğrulayın. 40+ ülke desteği, 200+ servis.
