@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
@@ -39,25 +40,24 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Servis bazlı istatistikler
-    // @ts-ignore - Prisma type issue with groupBy
-    const serviceStats = await prisma.transaction.groupBy({
-      by: ['serviceId'],
-      where: {
-        ...dateFilter,
-        type: 'purchase',
-        status: 'completed',
-        serviceId: {
-          not: null,
-        },
-      },
-      _count: {
-        id: true,
-      },
-      _sum: {
-        amount: true,
-      },
-    });
+    // Servis bazlı istatistikler - raw query kullanarak
+    const serviceStats = await prisma.$queryRaw<Array<{
+      serviceId: number | null;
+      _count: { id: number };
+      _sum: { amount: number | null };
+    }>>`
+      SELECT 
+        "serviceId", 
+        COUNT(*) as "_count.id", 
+        SUM(amount) as "_sum.amount"
+      FROM Transaction
+      WHERE 
+        type = 'purchase' 
+        AND status = 'completed'
+        AND "serviceId" IS NOT NULL
+        ${startDate && endDate ? Prisma.sql`AND "createdAt" >= ${new Date(startDate)} AND "createdAt" <= ${new Date(endDate)}` : Prisma.empty}
+      GROUP BY "serviceId"
+    `;
 
     // Servis ID'lerini çıkar
     const serviceIds = serviceStats
@@ -74,7 +74,6 @@ export async function GET(request: NextRequest) {
     });
 
     // Servis istatistiklerini birleştir
-    // @ts-ignore - Prisma type issue with groupBy result
     const serviceDetails = serviceStats.map(stat => {
       const serviceId = stat.serviceId as number;
       const service = services.find(s => s.id === serviceId);
@@ -92,25 +91,26 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Günlük istatistikler
-    // @ts-ignore - Prisma type issue with groupBy
-    const dailyStats = await prisma.transaction.groupBy({
-      by: ['createdAt'],
-      where: {
-        ...dateFilter,
-        type: 'purchase',
-        status: 'completed',
-      },
-      _count: {
-        id: true,
-      },
-      _sum: {
-        amount: true,
-      },
-    });
+    // Günlük istatistikler - raw query kullanarak
+    const dailyStats = await prisma.$queryRaw<Array<{
+      createdAt: Date;
+      _count: { id: number };
+      _sum: { amount: number | null };
+    }>>`
+      SELECT 
+        DATE("createdAt") as "createdAt", 
+        COUNT(*) as "_count.id", 
+        SUM(amount) as "_sum.amount"
+      FROM Transaction
+      WHERE 
+        type = 'purchase' 
+        AND status = 'completed'
+        ${startDate && endDate ? Prisma.sql`AND "createdAt" >= ${new Date(startDate)} AND "createdAt" <= ${new Date(endDate)}` : Prisma.empty}
+      GROUP BY DATE("createdAt")
+      ORDER BY DATE("createdAt")
+    `;
 
     // Günlük istatistikleri formatla
-    // @ts-ignore - Prisma type issue with groupBy result
     const formattedDailyStats = dailyStats.map(stat => {
       const revenue = stat._sum?.amount || 0;
       const profit = revenue * 0.3; // %30 kar marjı
