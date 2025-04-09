@@ -40,12 +40,16 @@ export async function GET(request: NextRequest) {
     });
 
     // Servis bazlı istatistikler
+    // @ts-ignore - Prisma type issue with groupBy
     const serviceStats = await prisma.transaction.groupBy({
       by: ['serviceId'],
       where: {
         ...dateFilter,
         type: 'purchase',
         status: 'completed',
+        serviceId: {
+          not: null,
+        },
       },
       _count: {
         id: true,
@@ -55,25 +59,32 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Servis ID'lerini çıkar
+    const serviceIds = serviceStats
+      .map(stat => stat.serviceId)
+      .filter((id): id is number => id !== null);
+
     // Servis detaylarını al
     const services = await prisma.service.findMany({
       where: {
         id: {
-          in: serviceStats.map(stat => stat.serviceId),
+          in: serviceIds,
         },
       },
     });
 
     // Servis istatistiklerini birleştir
+    // @ts-ignore - Prisma type issue with groupBy result
     const serviceDetails = serviceStats.map(stat => {
-      const service = services.find(s => s.id === stat.serviceId);
-      const revenue = stat._sum.amount || 0;
+      const serviceId = stat.serviceId as number;
+      const service = services.find(s => s.id === serviceId);
+      const revenue = stat._sum?.amount || 0;
       const profit = revenue * 0.3; // %30 kar marjı
 
       return {
-        id: stat.serviceId,
+        id: serviceId,
         name: service?.name || 'Bilinmeyen Servis',
-        totalOrders: stat._count.id,
+        totalOrders: stat._count?.id || 0,
         successRate: 98.5, // Bu değer gerçek verilerden hesaplanmalı
         revenue: `₺${revenue.toLocaleString()}`,
         profit: `₺${profit.toLocaleString()}`,
@@ -82,6 +93,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Günlük istatistikler
+    // @ts-ignore - Prisma type issue with groupBy
     const dailyStats = await prisma.transaction.groupBy({
       by: ['createdAt'],
       where: {
@@ -98,26 +110,27 @@ export async function GET(request: NextRequest) {
     });
 
     // Günlük istatistikleri formatla
+    // @ts-ignore - Prisma type issue with groupBy result
     const formattedDailyStats = dailyStats.map(stat => {
-      const revenue = stat._sum.amount || 0;
+      const revenue = stat._sum?.amount || 0;
       const profit = revenue * 0.3; // %30 kar marjı
 
       return {
         date: stat.createdAt.toISOString().split('T')[0],
-        orders: stat._count.id,
+        orders: stat._count?.id || 0,
         revenue: `₺${revenue.toLocaleString()}`,
         profit: `₺${profit.toLocaleString()}`,
       };
     });
 
     // Toplam kar hesapla
-    const totalProfit = (totalRevenue._sum.amount || 0) * 0.3;
+    const totalProfit = (totalRevenue._sum?.amount || 0) * 0.3;
     const profitMargin = 30; // Sabit %30 kar marjı
 
     return NextResponse.json({
       summary: {
         totalOrders,
-        totalRevenue: `₺${(totalRevenue._sum.amount || 0).toLocaleString()}`,
+        totalRevenue: `₺${(totalRevenue._sum?.amount || 0).toLocaleString()}`,
         totalProfit: `₺${totalProfit.toLocaleString()}`,
         profitMargin: `${profitMargin}%`,
       },
@@ -125,9 +138,9 @@ export async function GET(request: NextRequest) {
       dailyStats: formattedDailyStats,
     });
   } catch (error) {
-    console.error('Rapor verisi alınırken hata oluştu:', error);
+    console.error('Reports API Error:', error);
     return NextResponse.json(
-      { error: 'Rapor verisi alınırken bir hata oluştu' },
+      { error: 'Failed to generate reports' },
       { status: 500 }
     );
   }

@@ -17,6 +17,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@tabler/icons-react": "^3.31.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/js-cookie": "^3.0.6",
