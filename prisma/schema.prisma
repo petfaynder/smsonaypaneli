@@ -24,14 +24,15 @@ model Country {
 
 // Servis modeli
 model Service {
-  id          Int           @id @default(autoincrement())
-  name        String
-  description String?
-  price       Float
-  active      Boolean       @default(true)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  phoneNumbers PhoneNumber[]
+  id            Int           @id @default(autoincrement())
+  name          String
+  description   String?
+  price         Float
+  active        Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  phoneNumbers  PhoneNumber[]
+  transactions  Transaction[]
 }
 
 // Telefon numarası modeli
@@ -89,6 +90,8 @@ model Transaction {
   id          Int      @id @default(autoincrement())
   userId      Int
   user        User     @relation(fields: [userId], references: [id])
+  serviceId   Int?
+  service     Service? @relation(fields: [serviceId], references: [id])
   amount      Float
   type        String   // "deposit" or "withdrawal"
   status      String   // "pending", "completed", "failed"
@@ -97,6 +100,7 @@ model Transaction {
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+  @@index([serviceId])
 }
 
 model Ticket {
