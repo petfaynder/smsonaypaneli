@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,88 +39,89 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Servis bazlı istatistikler - raw query kullanarak
-    const serviceStats = await prisma.$queryRaw<Array<{
-      serviceId: number | null;
-      _count: { id: number };
-      _sum: { amount: number | null };
-    }>>`
-      SELECT 
-        "serviceId", 
-        COUNT(*) as "_count.id", 
-        SUM(amount) as "_sum.amount"
-      FROM Transaction
-      WHERE 
-        type = 'purchase' 
-        AND status = 'completed'
-        AND "serviceId" IS NOT NULL
-        ${startDate && endDate ? Prisma.sql`AND "createdAt" >= ${new Date(startDate)} AND "createdAt" <= ${new Date(endDate)}` : Prisma.empty}
-      GROUP BY "serviceId"
-    `;
-
-    // Servis ID'lerini çıkar
-    const serviceIds = serviceStats
-      .map(stat => stat.serviceId)
-      .filter((id): id is number => id !== null);
-
-    // Servis detaylarını al
-    const services = await prisma.service.findMany({
+    // Tüm tamamlanmış işlemleri al
+    const transactions = await prisma.transaction.findMany({
       where: {
-        id: {
-          in: serviceIds,
+        ...dateFilter,
+        type: 'purchase',
+        status: 'completed',
+        serviceId: {
+          not: null,
         },
+      },
+      include: {
+        service: true,
       },
     });
 
-    // Servis istatistiklerini birleştir
-    const serviceDetails = serviceStats.map(stat => {
-      const serviceId = stat.serviceId as number;
-      const service = services.find(s => s.id === serviceId);
-      const revenue = stat._sum?.amount || 0;
-      const profit = revenue * 0.3; // %30 kar marjı
-
+    // Servis bazlı istatistikleri hesapla
+    const serviceStatsMap = new Map();
+    
+    for (const transaction of transactions) {
+      if (!transaction.serviceId) continue;
+      
+      const serviceId = transaction.serviceId;
+      if (!serviceStatsMap.has(serviceId)) {
+        serviceStatsMap.set(serviceId, {
+          id: serviceId,
+          name: transaction.service?.name || 'Bilinmeyen Servis',
+          totalOrders: 0,
+          revenue: 0,
+        });
+      }
+      
+      const stat = serviceStatsMap.get(serviceId);
+      stat.totalOrders += 1;
+      stat.revenue += transaction.amount;
+    }
+    
+    // Servis istatistiklerini diziye dönüştür
+    const serviceDetails = Array.from(serviceStatsMap.values()).map(stat => {
+      const profit = stat.revenue * 0.3; // %30 kar marjı
+      
       return {
-        id: serviceId,
-        name: service?.name || 'Bilinmeyen Servis',
-        totalOrders: stat._count?.id || 0,
+        id: stat.id,
+        name: stat.name,
+        totalOrders: stat.totalOrders,
         successRate: 98.5, // Bu değer gerçek verilerden hesaplanmalı
-        revenue: `₺${revenue.toLocaleString()}`,
+        revenue: `₺${stat.revenue.toLocaleString()}`,
         profit: `₺${profit.toLocaleString()}`,
         profitMargin: 30,
       };
     });
 
-    // Günlük istatistikler - raw query kullanarak
-    const dailyStats = await prisma.$queryRaw<Array<{
-      createdAt: Date;
-      _count: { id: number };
-      _sum: { amount: number | null };
-    }>>`
-      SELECT 
-        DATE("createdAt") as "createdAt", 
-        COUNT(*) as "_count.id", 
-        SUM(amount) as "_sum.amount"
-      FROM Transaction
-      WHERE 
-        type = 'purchase' 
-        AND status = 'completed'
-        ${startDate && endDate ? Prisma.sql`AND "createdAt" >= ${new Date(startDate)} AND "createdAt" <= ${new Date(endDate)}` : Prisma.empty}
-      GROUP BY DATE("createdAt")
-      ORDER BY DATE("createdAt")
-    `;
-
-    // Günlük istatistikleri formatla
-    const formattedDailyStats = dailyStats.map(stat => {
-      const revenue = stat._sum?.amount || 0;
-      const profit = revenue * 0.3; // %30 kar marjı
-
-      return {
-        date: stat.createdAt.toISOString().split('T')[0],
-        orders: stat._count?.id || 0,
-        revenue: `₺${revenue.toLocaleString()}`,
-        profit: `₺${profit.toLocaleString()}`,
-      };
-    });
+    // Günlük istatistikleri hesapla
+    const dailyStatsMap = new Map();
+    
+    for (const transaction of transactions) {
+      const date = transaction.createdAt.toISOString().split('T')[0];
+      
+      if (!dailyStatsMap.has(date)) {
+        dailyStatsMap.set(date, {
+          date,
+          orders: 0,
+          revenue: 0,
+        });
+      }
+      
+      const stat = dailyStatsMap.get(date);
+      stat.orders += 1;
+      stat.revenue += transaction.amount;
+    }
+    
+    // Günlük istatistikleri diziye dönüştür ve sırala
+    const formattedDailyStats = Array.from(dailyStatsMap.values())
+      .map(stat => {
+        const profit = stat.revenue * 0.3; // %30 kar marjı
+        
+        return {
+          date: stat.date,
+          orders: stat.orders,
+          revenue: `₺${stat.revenue.toLocaleString()}`,
+          profit: `₺${profit.toLocaleString()}`,
+        };
+      })
+      .sort((a, b) => a.date.localeCompare(b.date));
 
     // Toplam kar hesapla
     const totalProfit = (totalRevenue._sum?.amount || 0) * 0.3;

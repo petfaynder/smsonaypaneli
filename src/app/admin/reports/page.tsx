@@ -77,7 +77,7 @@ export default function ReportsPage() {
 
     try {
       // API URL'sini oluştur
-      const url = new URL('/api/admin/reports', window.location.origin);
+      const url = new URL('/api/admin/reports-new', window.location.origin);
       if (dateRange.start) url.searchParams.append('startDate', dateRange.start);
       if (dateRange.end) url.searchParams.append('endDate', dateRange.end);
 
