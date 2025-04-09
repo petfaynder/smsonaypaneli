@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     
     // Her bir konfigürasyonu güncelle
     for (const config of apiConfigs) {
-      smsService.updateApiConfig(config);
+      smsService.updateConfig(config);
     }
     
     return NextResponse.json({ 
