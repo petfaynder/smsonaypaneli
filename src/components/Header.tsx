@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useTheme } from '@/context/ThemeContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useState } from 'react';
 import { FiUser, FiMenu, FiX, FiSun, FiMoon } from 'react-icons/fi';
 

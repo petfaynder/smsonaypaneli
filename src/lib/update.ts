@@ -23,7 +23,7 @@ export interface UpdateInfo {
  * @returns {string} - Uygulama versiyonu
  */
 export function getCurrentVersion(): string {
-  return process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0';
+  return '1.0.0';
 }
 
 /**

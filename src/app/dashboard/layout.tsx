@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTheme } from '@/context/ThemeContext'
+import NotificationAnnouncement from '@/components/NotificationAnnouncement'
 
 // İkonu temsil eden basit bileşenler
 const DashboardIcon = () => (
@@ -154,6 +155,11 @@ export default function DashboardLayout({
 
             {/* Kullanıcı alanı */}
             <div className="flex items-center">
+              {/* Bildirimler */}
+              <div className="mr-4">
+                <NotificationAnnouncement />
+              </div>
+
               {/* Bakiye */}
               <div className="hidden md:flex items-center mr-4 bg-purple-600 rounded-full px-3 py-1">
                 <span className="text-xs text-purple-200 mr-1">Bakiye:</span>

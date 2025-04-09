@@ -9,42 +9,129 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 // Ülke modeli
 model Country {
   id        Int      @id @default(autoincrement())
-  code      String   @unique
   name      String
-  flag      String
-  available Boolean  @default(true)
+  code      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 // Servis modeli
 model Service {
-  id            Int      @id @default(autoincrement())
-  name          String
-  icon          String
-  price         Float
-  available     Boolean  @default(true)
-  countryPrices String   @default("")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id          Int           @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  active      Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  phoneNumbers PhoneNumber[]
 }
 
 // Telefon numarası modeli
 model PhoneNumber {
-  id        String   @id
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  serviceId Int
+  service   Service  @relation(fields: [serviceId], references: [id])
   number    String
-  serviceId String
-  countryId Int
-  provider  String
-  status    String
-  smsCode   String?
+  status    String   // "active", "used", "expired"
+  code      String?
+  expiresAt DateTime?
   createdAt DateTime @default(now())
-  expiresAt DateTime
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([serviceId])
+}
+
+model Settings {
+  id               Int      @id @default(1)
+  siteName         String   @default("SMS Onay Paneli")
+  siteDescription  String   @default("SMS Onay Hizmetleri")
+  contactEmail     String   @default("info@example.com")
+  contactPhone     String   @default("+90 555 555 55 55")
+  aiEnabled        Boolean  @default(false)
+  openaiApiKey     String?  @db.Text
+  openaiModel      String   @default("gpt-3.5-turbo")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  email        String        @unique
+  name         String?
+  password     String
+  role         String        @default("user")
+  balance      Float         @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+  tickets      Ticket[]
+  messages     Message[]
+  phoneNumbers PhoneNumber[]
+}
+
+model Transaction {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  amount      Float
+  type        String   // "deposit" or "withdrawal"
+  status      String   // "pending", "completed", "failed"
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Ticket {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id])
+  subject   String
+  status    String    @default("open")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
+
+  @@index([userId])
+}
+
+model Message {
+  id           Int      @id @default(autoincrement())
+  ticketId     Int
+  ticket       Ticket   @relation(fields: [ticketId], references: [id])
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id])
+  content      String   @db.Text
+  isAiGenerated Boolean @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([userId])
+}
+
+model Announcement {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String   @db.Text
+  type      String   // 'dashboard' or 'notification'
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

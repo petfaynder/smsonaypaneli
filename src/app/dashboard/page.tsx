@@ -6,6 +6,27 @@ import Image from 'next/image'
 import { getCountries, getServices, Country, Service } from '@/lib/dataService'
 import { getSmsService } from '@/lib/services/smsService'
 import { NumberRequest, ServiceStatus, PhoneNumber, Order, SmsApiProvider } from '@/types/smsApi'
+import DashboardAnnouncement from '@/components/DashboardAnnouncement'
+import NotificationAnnouncement from '@/components/NotificationAnnouncement'
+
+// Icon components
+const OrdersIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+  </svg>
+)
+
+const WalletIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+  </svg>
+)
+
+const SupportIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+  </svg>
+)
 
 // Simüle edilmiş aktif siparişler
 const mockActiveOrders = [
@@ -77,6 +98,12 @@ export default function Dashboard() {
   
   // Aktif siparişler
   const [orders, setOrders] = useState<PhoneNumber[]>([])
+
+  // Kullanıcı bilgileri
+  const [user, setUser] = useState({
+    balance: 0,
+    ticketCount: 0
+  })
 
   // Dropdown için yeni state'ler
   const [showServiceDropdown, setShowServiceDropdown] = useState<boolean>(false)
@@ -391,48 +418,31 @@ export default function Dashboard() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Dashboard</h1>
-        
-        {/* İstatistikler */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard 
-            title="Bakiye" 
-            value="₺45.75" 
-            icon={
-              <svg className="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            } 
-          />
-          <StatCard 
-            title="Aktif Siparişler" 
-            value={orders.length} 
-            icon={
-              <svg className="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            } 
-          />
-          <StatCard 
-            title="Tamamlanan İşlemler" 
-            value="28" 
-            icon={
-              <svg className="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            } 
-          />
-          <StatCard 
-            title="Ortalama Süre" 
-            value="2m 24s" 
-            icon={
-              <svg className="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            } 
-          />
-        </div>
+      {/* Duyurular */}
+      <DashboardAnnouncement />
+      
+      {/* İstatistikler */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <StatCard
+          title="Toplam Sipariş"
+          value={orders.length}
+          icon={<OrdersIcon />}
+        />
+        <StatCard
+          title="Aktif Sipariş"
+          value={orders.filter(o => o.status === 'waiting').length}
+          icon={<OrdersIcon />}
+        />
+        <StatCard
+          title="Bakiye"
+          value={`${user.balance.toFixed(2)} ₺`}
+          icon={<WalletIcon />}
+        />
+        <StatCard
+          title="Destek Talepleri"
+          value={user.ticketCount}
+          icon={<SupportIcon />}
+        />
       </div>
       
       {/* Ana içerik - 2 sütunlu layout */}

@@ -36,6 +36,18 @@ export async function middleware(request: NextRequest) {
     // Gerçek uygulamada burada lisans durumu doğrulanmalı
   }
 
+  // Admin sayfalarına erişim kontrolü
+  if (pathname.startsWith('/admin')) {
+    // Login sayfası hariç tüm admin sayfalarını kontrol et
+    if (pathname !== '/admin/login') {
+      const isAuthenticated = request.cookies.get('admin_token');
+      
+      if (!isAuthenticated) {
+        return NextResponse.redirect(new URL('/admin/login', request.url));
+      }
+    }
+  }
+
   return NextResponse.next();
 }
 
@@ -44,5 +56,6 @@ export const config = {
     // API ve Dashboard yollarını eşleştir
     '/api/:path*',
     '/dashboard/:path*',
+    '/admin/:path*',
   ],
 }; 
